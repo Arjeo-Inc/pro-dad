@@ -1,13 +1,665 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAAGXRFWHRTb2Z0d2FyZQBNYWNpbnRvc2ggSEQgdjEuOTAg4Baq2gAAAD9JREFUKFNjZGBgYGBgUggUGBoa/N8BgwERnLx9uZkBlJDAyMjKAkYEHETVzkKACGcEAMON0IxtZG6XAAAAAElFTkSuQmCC" type="image/png">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Artifact Viewer</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>xytoe</title>
+<meta name="description" content="Dad's napping. His toe is out. You have a hammer.">
+<meta name="theme-color" content="#2E1F47">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦶</text></svg>">
+<style>
+:root {
+  --ink: #241A3A;
+  --night: #2E1F47;
+  --night-2: #3A2858;
+  --mustard: #F3B53F;
+  --mustard-d: #D99A26;
+  --teal: #2F8F83;
+  --teal-d: #23706A;
+  --tomato: #E4472F;
+  --skin: #F7BE94;
+  --skin-d: #E3976E;
+  --cream: #FFF3DC;
+  --nail: #FBE3D3;
+  --hurt: 0;
+  --line: .8cqw;
+  font-family: ui-rounded, "SF Pro Rounded", "Nunito", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  color: var(--cream);
+  -webkit-font-smoothing: antialiased;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background:
+    radial-gradient(circle at 1px 1px, rgb(255 243 220 / .07) 1.2px, transparent 1.6px) 0 0 / 18px 18px,
+    var(--night);
+  display: flex;
+  justify-content: center;
+  padding: max(16px, env(safe-area-inset-top)) 16px 32px;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--mustard); outline-offset: 3px; }
+
+.app { width: 100%; max-width: 460px; display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------- top bar ---------- */
+.top { display: flex; align-items: center; gap: 12px; }
+.brand {
+  font-size: 30px; font-weight: 900; letter-spacing: -.02em; line-height: 1;
+  color: var(--mustard);
+  text-shadow: 3px 3px 0 var(--ink), -1px -1px 0 var(--ink), 1px -1px 0 var(--ink), -1px 1px 0 var(--ink);
+  transform: rotate(-4deg);
+  margin: 0 auto 0 2px;
+}
+.chip {
+  border: 3px solid var(--ink);
+  background: var(--cream);
+  color: var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 4px 0 var(--ink);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform .08s, box-shadow .08s;
+}
+.chip:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.icon-btn { width: 46px; height: 46px; display: grid; place-items: center; font-size: 20px; padding: 0; }
+.shop-btn { height: 46px; padding: 0 18px 0 12px; display: flex; align-items: center; gap: 8px; background: var(--mustard); font-size: 16px; }
+.shop-btn .mini-bottle { width: 14px; height: 22px; position: relative; }
+.mini-bottle::before { content: ""; position: absolute; left: 4px; top: 0; width: 6px; height: 8px; background: var(--ink); border-radius: 2px; }
+.mini-bottle::after { content: ""; position: absolute; left: 0; bottom: 0; width: 14px; height: 15px; background: var(--polish, var(--tomato)); border: 2px solid var(--ink); border-radius: 4px 4px 5px 5px; }
+
+/* ---------- scoreboard ---------- */
+.board { display: grid; grid-template-columns: 1fr auto; align-items: end; gap: 8px 12px; }
+.score { line-height: .9; }
+.score b { display: block; font-size: 64px; font-weight: 900; letter-spacing: -.04em; font-variant-numeric: tabular-nums; color: var(--cream); text-shadow: 0 4px 0 var(--ink); }
+.score span { font-size: 14px; font-weight: 700; opacity: .7; }
+.mult {
+  justify-self: end; text-align: right; font-weight: 900; line-height: 1;
+}
+.mult b { font-size: 34px; color: var(--mustard); font-variant-numeric: tabular-nums; text-shadow: 0 3px 0 var(--ink); }
+.mult span { display: block; font-size: 13px; font-weight: 700; opacity: .7; margin-top: 4px; }
+.mult.rampage b { color: var(--tomato); animation: throb .5s ease-in-out infinite; }
+.mult.rampage span { opacity: 1; color: var(--tomato); }
+
+.fuse { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; }
+.fuse-track { flex: 1; height: 14px; border: 3px solid var(--ink); border-radius: 999px; background: var(--night-2); overflow: hidden; }
+.fuse-fill { height: 100%; width: 100%; background: var(--teal); border-radius: 999px; transform-origin: left; }
+.fuse.low .fuse-fill { background: var(--tomato); }
+.fuse.low .fuse-time { color: var(--tomato); }
+.fuse-time { width: 3.2em; text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ---------- stage ---------- */
+.stage {
+  position: relative; display: block; width: 100%; padding: 0; margin: 0;
+  aspect-ratio: 100 / 118;
+  container-type: inline-size;
+  border: 4px solid var(--ink);
+  border-radius: 28px;
+  overflow: hidden;
+  cursor: crosshair;
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / .07) 0 1.4cqw, transparent 1.4cqw 3.2cqw),
+    radial-gradient(120% 70% at 50% 30%, var(--mustard) 40%, var(--mustard-d));
+  box-shadow: 0 8px 0 var(--ink);
+  touch-action: manipulation;
+  user-select: none;
+}
+.stage::after { /* rampage flush */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 28% 62%, rgb(228 71 47 / .45), transparent 60%);
+  opacity: 0; transition: opacity .4s;
+}
+.rampage-on .stage::after { opacity: 1; animation: throb .6s ease-in-out infinite; }
+.stage.shake { animation: shake .22s linear; }
+
+/* cushion seam */
+.seam { position: absolute; left: 52cqw; top: -5cqw; width: 1.2cqw; height: 130cqw; background: rgb(0 0 0 / .12); transform: rotate(4deg); border-radius: 1cqw; }
+
+/* foot */
+.foot {
+  position: absolute; inset: 0;
+  filter:
+    drop-shadow(var(--line) 0 0 var(--ink)) drop-shadow(calc(var(--line) * -1) 0 0 var(--ink))
+    drop-shadow(0 var(--line) 0 var(--ink)) drop-shadow(0 calc(var(--line) * -1) 0 var(--ink));
+}
+.rampage-on .foot { animation: tremble .12s linear infinite; }
+.sole {
+  position: absolute; left: 17cqw; top: 70cqw; width: 68cqw; height: 70cqw;
+  background:
+    radial-gradient(60% 40% at 30% 30%, rgb(255 255 255 / .25), transparent 70%),
+    linear-gradient(90deg, var(--skin) 60%, var(--skin-d));
+  border-radius: 38% 46% 30% 30% / 26% 32% 20% 20%;
+}
+.ankle-bone { position: absolute; left: 66cqw; top: 92cqw; width: 12cqw; height: 9cqw; border-radius: 50%; background: rgb(0 0 0 / .08); }
+.toe {
+  position: absolute;
+  background: radial-gradient(70% 60% at 35% 30%, rgb(255 255 255 / .35), transparent 70%), var(--skin);
+  border-radius: 48% 48% 42% 42% / 56% 56% 44% 44%;
+  box-shadow: inset calc(var(--line) * -1) -0.6cqw 0 rgb(0 0 0 / .1);
+}
+.toe::before { /* crease between toes */
+  content: ""; position: absolute; left: -0.4cqw; bottom: 8%; width: var(--line); height: 45%; background: var(--ink); border-radius: 1cqw;
+}
+.t1::before { display: none; }
+.t1 { left: 18cqw; top: 58cqw; width: 19cqw; height: 25cqw; transform-origin: 50% 100%;
+      background: radial-gradient(70% 60% at 35% 30%, rgb(255 255 255 / .35), transparent 70%),
+                  color-mix(in oklab, var(--skin), #E8402A calc(var(--hurt) * 70%)); transition: background .5s; }
+.t2 { left: 37.5cqw; top: 60.5cqw; width: 13.5cqw; height: 19cqw; }
+.t3 { left: 51cqw; top: 64cqw; width: 12cqw; height: 16cqw; }
+.t4 { left: 63cqw; top: 68cqw; width: 11cqw; height: 14cqw; }
+.t5 { left: 74cqw; top: 73.5cqw; width: 9.5cqw; height: 12cqw; }
+.t1.ouch { animation: squash .45s cubic-bezier(.2, 1.6, .4, 1); }
+.nail {
+  position: absolute; left: 22%; top: 9%; width: 56%; height: 40%;
+  border-radius: 46% 46% 36% 36% / 60% 60% 40% 40%;
+  background: var(--polish, var(--nail));
+  box-shadow: inset 0 0 0 .5cqw rgb(36 26 58 / .35);
+  overflow: hidden;
+}
+.nail::after { content: ""; position: absolute; left: 18%; top: 14%; width: 26%; height: 50%; border-radius: 50%; background: rgb(255 255 255 / .6); transform: rotate(-18deg); }
+.style-golden .nail { background: linear-gradient(115deg, #B8860B 0%, #FFE27A 30%, #DAA520 50%, #FFF4B8 62%, #B8860B 100%) 0 0 / 250% 100%; animation: gleam 2.4s linear infinite; }
+.bump { /* the lump that grows on the big toe */
+  position: absolute; left: 50%; top: -14%; width: 44%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 38% 34%, #FF9C86, var(--tomato) 70%);
+  translate: -50% 0; scale: calc(var(--hurt) * 1.1); transition: scale .35s cubic-bezier(.3, 1.6, .5, 1);
+  z-index: -1;
+}
+
+/* blanket */
+.blanket {
+  position: absolute; left: -8cqw; right: -8cqw; top: 99cqw; height: 40cqw;
+  border-top: var(--line) solid var(--ink);
+  border-radius: 46% 54% 0 0 / 7cqw 9cqw 0 0;
+  background:
+    repeating-linear-gradient(90deg, rgb(255 243 220 / .22) 0 2cqw, transparent 2cqw 9cqw),
+    repeating-linear-gradient(0deg, rgb(255 243 220 / .22) 0 2cqw, transparent 2cqw 9cqw),
+    repeating-linear-gradient(90deg, transparent 0 5cqw, rgb(36 26 58 / .18) 5cqw 6cqw, transparent 6cqw 9cqw),
+    var(--teal);
+  box-shadow: inset 0 2cqw 0 rgb(255 255 255 / .12);
+}
+.blanket::before { /* fold */
+  content: ""; position: absolute; left: 10cqw; right: 10cqw; top: 6cqw; height: 1cqw; border-radius: 1cqw; background: var(--teal-d); opacity: .7;
+}
+
+/* hammer: pivot at right centre, head at left; 0deg = impact */
+.hammer {
+  position: absolute; left: 22cqw; top: 40cqw; width: 72cqw; height: 22cqw;
+  transform-origin: calc(100% - 2cqw) 50%;
+  transform: rotate(34deg);
+  pointer-events: none;
+  z-index: 3;
+}
+.hammer.swing { animation: swing .4s cubic-bezier(.55, 0, .3, 1); }
+.handle {
+  position: absolute; left: 10cqw; right: 0; top: 8.5cqw; height: 5cqw;
+  border: var(--line) solid var(--ink); border-radius: 2.5cqw;
+  background:
+    repeating-linear-gradient(100deg, transparent 0 4cqw, rgb(0 0 0 / .1) 4cqw 4.6cqw),
+    linear-gradient(#E9A86A, #B86F38);
+}
+.grip {
+  position: absolute; right: 0; top: 7.5cqw; width: 14cqw; height: 7cqw;
+  border: var(--line) solid var(--ink); border-radius: 3.5cqw;
+  background: repeating-linear-gradient(110deg, var(--tomato) 0 1.6cqw, #B92F1D 1.6cqw 2.6cqw);
+}
+.head {
+  position: absolute; left: 0; top: 0; width: 13cqw; height: 22cqw;
+  border: var(--line) solid var(--ink); border-radius: 2cqw;
+  background:
+    linear-gradient(90deg, rgb(255 255 255 / 0) 20%, rgb(255 255 255 / .55) 32%, rgb(255 255 255 / 0) 46%),
+    linear-gradient(90deg, #8D96A8, #D9DEE8 40%, #6B7385);
+}
+.head::before, .head::after { /* faces */
+  content: ""; position: absolute; left: -1.5cqw; right: -1.5cqw; height: 3.2cqw;
+  background: linear-gradient(90deg, #5B6273, #AEB6C6 45%, #4A5060);
+  border: var(--line) solid var(--ink); border-radius: 1.2cqw;
+}
+.head::before { top: -1.8cqw; }
+.head::after { bottom: -1.8cqw; }
+
+/* effects layer */
+.fx { position: absolute; inset: 0; pointer-events: none; z-index: 4; }
+.burst {
+  position: absolute; width: 34cqw; aspect-ratio: 1; translate: -50% -50%;
+  display: grid; place-items: center;
+  background: var(--cream);
+  clip-path: polygon(50% 0, 61% 30%, 93% 18%, 72% 44%, 100% 58%, 68% 64%, 78% 98%, 52% 74%, 28% 96%, 33% 66%, 0 70%, 26% 48%, 6% 20%, 38% 30%);
+  animation: pop .55s cubic-bezier(.2, 1.8, .4, 1) forwards;
+}
+.burst::before {
+  content: ""; position: absolute; inset: 3cqw; background: var(--mustard);
+  clip-path: inherit;
+}
+.burst i {
+  position: relative; font-style: normal; font-weight: 900; font-size: 7cqw; letter-spacing: -.03em;
+  color: var(--tomato); -webkit-text-stroke: .5cqw var(--ink); paint-order: stroke fill;
+  transform: rotate(-10deg);
+}
+.float {
+  position: absolute; translate: -50% 0; font-weight: 900; font-size: 7cqw;
+  color: var(--cream); -webkit-text-stroke: .6cqw var(--ink); paint-order: stroke fill;
+  animation: rise .9s ease-out forwards;
+}
+.float.minus { color: var(--tomato); }
+.drop {
+  position: absolute; width: 2.4cqw; height: 3.2cqw; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  background: #9FE3F5; border: .4cqw solid var(--ink);
+  animation: fling .6s cubic-bezier(.2, .6, .4, 1) forwards;
+}
+.dizzy {
+  position: absolute; left: 27.5cqw; top: 53cqw; width: 0; height: 0;
+  transform: scaleY(.38); opacity: 0; transition: opacity .3s;
+}
+.rampage-on .dizzy { opacity: 1; }
+.dizzy span {
+  position: absolute; left: -2.5cqw; top: -2.5cqw; width: 5cqw; height: 5cqw; line-height: 5cqw; text-align: center;
+  font-size: 5cqw; color: var(--cream); -webkit-text-stroke: .4cqw var(--ink); paint-order: stroke fill;
+  animation: orbit 1.1s linear infinite;
+}
+.dizzy span:nth-child(2) { animation-delay: -.366s; }
+.dizzy span:nth-child(3) { animation-delay: -.733s; }
+
+/* dad's voice */
+.bubble {
+  position: absolute; right: 5cqw; top: 6cqw; max-width: 48cqw;
+  background: var(--cream); color: var(--ink);
+  border: var(--line) solid var(--ink); border-radius: 5cqw;
+  padding: 2.4cqw 4cqw; font-weight: 900; font-size: 5.2cqw; line-height: 1.1;
+  opacity: 0; scale: .6; transform-origin: 70% 100%;
+  transition: opacity .15s, scale .25s cubic-bezier(.3, 1.8, .5, 1);
+  z-index: 5;
+}
+.bubble::after {
+  content: ""; position: absolute; right: 9cqw; bottom: -4cqw; width: 5cqw; height: 5cqw;
+  background: var(--cream); border-right: var(--line) solid var(--ink); border-bottom: var(--line) solid var(--ink);
+  transform: skewY(30deg) rotate(30deg);
+}
+.bubble.show { opacity: 1; scale: 1; }
+.zzz { position: absolute; left: 87cqw; top: 86cqw; z-index: 2; font-weight: 900; color: var(--cream); -webkit-text-stroke: .4cqw var(--ink); paint-order: stroke fill; opacity: 0; }
+.idle .zzz { opacity: 1; }
+.zzz span { position: absolute; font-size: 6cqw; animation: snore 2.4s ease-in infinite; opacity: 0; }
+.zzz span:nth-child(2) { animation-delay: .8s; font-size: 4.5cqw; }
+.zzz span:nth-child(3) { animation-delay: 1.6s; font-size: 3.5cqw; }
+
+.hint {
+  position: absolute; left: 0; right: 0; bottom: 6cqw; text-align: center; z-index: 5;
+  font-weight: 800; font-size: 4.6cqw; color: var(--cream); text-shadow: 0 .5cqw 0 var(--ink);
+  transition: opacity .4s;
+}
+.played .hint { opacity: 0; }
+
+/* ---------- footer ---------- */
+.foot-bar { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 700; color: rgb(255 243 220 / .6); padding: 4px 4px 0; }
+.link-btn { background: none; border: 0; padding: 8px 4px; cursor: pointer; font-weight: 800; color: rgb(255 243 220 / .75); text-decoration: underline; text-underline-offset: 3px; }
+.link-btn.arm { color: var(--tomato); }
+
+/* ---------- shop ---------- */
+dialog {
+  border: 4px solid var(--ink); border-radius: 28px; padding: 0;
+  width: min(560px, calc(100vw - 32px)); max-height: calc(100dvh - 32px);
+  background: var(--cream); color: var(--ink);
+  box-shadow: 0 10px 0 var(--ink);
+}
+dialog::backdrop { background: rgb(26 18 42 / .75); backdrop-filter: blur(4px); }
+dialog[open] { animation: rise-in .3s cubic-bezier(.2, 1.4, .4, 1); }
+.shop-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 4px 24px; gap: 12px; }
+.shop-head h2 { margin: 0; font-size: 28px; font-weight: 900; letter-spacing: -.02em; }
+.shop-head p { margin: 2px 0 0; font-size: 14px; font-weight: 700; opacity: .65; }
+.close { width: 42px; height: 42px; flex: none; font-size: 18px; box-shadow: 0 3px 0 var(--ink); }
+.shelf {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 18px 10px;
+  padding: 20px 20px 22px;
+}
+.item { display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
+.bottle { position: relative; width: 52px; height: 86px; margin-bottom: 4px; }
+.bottle .cap {
+  position: absolute; left: 14px; top: 0; width: 24px; height: 36px;
+  background: linear-gradient(90deg, #3A2E52, var(--ink) 40%, #4A3D66 70%, var(--ink));
+  border: 3px solid var(--ink); border-radius: 6px 6px 3px 3px;
+}
+.bottle .glass {
+  position: absolute; left: 0; bottom: 0; width: 52px; height: 54px;
+  border: 3px solid var(--ink); border-radius: 12px 12px 16px 16px;
+  background:
+    linear-gradient(90deg, transparent 18%, rgb(255 255 255 / .55) 22% 30%, transparent 34%),
+    var(--polish);
+  overflow: hidden;
+}
+.bottle .glass::after { /* liquid line */
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 9px; background: rgb(255 255 255 / .45); border-bottom: 2px solid rgb(36 26 58 / .2);
+}
+.item[data-id="golden"] .glass { background: linear-gradient(90deg, transparent 18%, rgb(255 255 255 / .6) 22% 30%, transparent 34%), linear-gradient(115deg, #B8860B, #FFE27A 35%, #DAA520 55%, #FFF4B8 70%, #B8860B) 0 0 / 250% 100%; animation: gleam 2.4s linear infinite; }
+.item.locked .bottle { opacity: .55; }
+.item h3 { margin: 0; font-size: 15px; font-weight: 900; line-height: 1.15; }
+.item p { margin: 0; font-size: 12px; font-weight: 600; opacity: .65; line-height: 1.3; min-height: 2.6em; }
+.buy {
+  width: 100%; min-height: 38px; padding: 0 10px; border-radius: 999px; font-size: 14px; font-weight: 900; cursor: pointer;
+  border: 3px solid var(--ink); background: var(--mustard); color: var(--ink); box-shadow: 0 3px 0 var(--ink);
+}
+.buy:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+.buy.wear { background: var(--teal); color: var(--cream); }
+.buy:disabled { background: transparent; color: rgb(36 26 58 / .55); border-style: dashed; box-shadow: none; cursor: not-allowed; }
+.buy.worn { background: transparent; color: var(--teal-d); border-style: solid; border-color: var(--teal); box-shadow: none; cursor: default; }
+
+.toast {
+  position: fixed; left: 50%; bottom: max(20px, env(safe-area-inset-bottom)); translate: -50% 200%; visibility: hidden;
+  background: var(--ink); color: var(--cream); font-weight: 800; padding: 12px 20px; border-radius: 999px;
+  border: 3px solid var(--cream); transition: translate .3s cubic-bezier(.3, 1.5, .5, 1); z-index: 10; white-space: nowrap;
+}
+.toast.show { translate: -50% 0; visibility: visible; }
+
+/* ---------- keyframes ---------- */
+@keyframes swing {
+  0% { transform: rotate(34deg); }
+  12% { transform: rotate(44deg); }
+  40% { transform: rotate(-3deg); }
+  52% { transform: rotate(3deg); }
+  100% { transform: rotate(34deg); }
+}
+@keyframes squash {
+  0% { scale: 1 1; }
+  25% { scale: 1.28 .62; }
+  60% { scale: .92 1.1; }
+  100% { scale: 1 1; }
+}
+@keyframes pop {
+  0% { scale: .2; rotate: -20deg; opacity: 1; }
+  40% { scale: 1.1; rotate: 4deg; }
+  75% { opacity: 1; }
+  100% { scale: 1; rotate: 0deg; opacity: 0; }
+}
+@keyframes rise { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-14cqw); opacity: 0; } }
+@keyframes fling {
+  from { transform: translate(0, 0) rotate(0); opacity: 1; }
+  to { transform: translate(var(--dx), var(--dy)) rotate(var(--r)); opacity: 0; }
+}
+@keyframes orbit { from { transform: rotate(0deg) translateX(13cqw) rotate(0deg) scaleY(2.6); } to { transform: rotate(360deg) translateX(13cqw) rotate(-360deg) scaleY(2.6); } }
+@keyframes shake {
+  0%, 100% { translate: 0 0; } 20% { translate: -1.4cqw 1cqw; } 40% { translate: 1.4cqw -.8cqw; } 60% { translate: -1cqw -.6cqw; } 80% { translate: .8cqw .8cqw; }
+}
+@keyframes tremble { 0%, 100% { translate: 0 0; } 25% { translate: .3cqw 0; } 75% { translate: -.3cqw 0; } }
+@keyframes throb { 50% { opacity: .55; } }
+@keyframes gleam { to { background-position: -250% 0; } }
+@keyframes snore { 0% { transform: translate(0, 0); opacity: 0; } 20% { opacity: 1; } 100% { transform: translate(6cqw, -16cqw); opacity: 0; } }
+@keyframes rise-in { from { translate: 0 30px; opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .stage.shake, .rampage-on .foot, .rampage-on .stage::after, .mult.rampage b,
+  .style-golden .nail, .item[data-id="golden"] .glass { animation: none; }
+  .dizzy span { animation-duration: 4s; }
+}
+@media (max-width: 380px) {
+  .score b { font-size: 52px; }
+  .shop-btn span { display: none; }
+  .shop-btn { padding: 0 12px; }
+}
+</style>
+</head>
+<body>
+<main class="app" id="app">
+  <header class="top">
+    <h1 class="brand">xytoe</h1>
+    <button class="chip icon-btn" id="mute" aria-pressed="false" aria-label="Mute sound">🔊</button>
+    <button class="chip shop-btn" id="openShop"><i class="mini-bottle" aria-hidden="true"></i><span>Polish shop</span></button>
+  </header>
+
+  <section class="board" aria-live="polite">
+    <div class="score"><b id="score">0</b><span>points</span></div>
+    <div class="mult" id="multBox"><b id="mult">×1.0</b><span id="multLabel">multiplier</span></div>
+    <div class="fuse" id="fuse">
+      <span>Smash within</span>
+      <div class="fuse-track"><div class="fuse-fill" id="fuseFill"></div></div>
+      <span class="fuse-time" id="fuseTime">5.0s</span>
+    </div>
+  </section>
+
+  <button class="stage idle" id="stage" aria-label="Smash the toe (space or enter)">
+    <i class="seam"></i>
+    <div class="bubble" id="bubble"></div>
+    <div class="zzz" aria-hidden="true"><span>z</span><span>z</span><span>z</span></div>
+    <div class="foot" id="foot" aria-hidden="true">
+      <div class="sole"><i class="ankle-bone"></i></div>
+      <div class="toe t1" id="bigToe"><i class="bump"></i><i class="nail"></i></div>
+      <div class="toe t2"><i class="nail"></i></div>
+      <div class="toe t3"><i class="nail"></i></div>
+      <div class="toe t4"><i class="nail"></i></div>
+      <div class="toe t5"><i class="nail"></i></div>
+    </div>
+    <div class="blanket" aria-hidden="true"></div>
+    <div class="dizzy" aria-hidden="true"><span>★</span><span>★</span><span>★</span></div>
+    <div class="hammer" id="hammer" aria-hidden="true"><i class="handle"></i><i class="grip"></i><i class="head"></i></div>
+    <div class="fx" id="fx"></div>
+    <div class="hint">Tap to smash</div>
+  </button>
+
+  <footer class="foot-bar">
+    <span id="combo">No combo yet</span>
+    <button class="link-btn" id="reset">Reset progress</button>
+  </footer>
+</main>
+
+<dialog id="shop" aria-labelledby="shopTitle">
+  <div class="shop-head">
+    <div>
+      <h2 id="shopTitle">Polish shop</h2>
+      <p>You have <b id="shopScore">0</b> points to spend.</p>
+    </div>
+    <button class="chip close" id="closeShop" aria-label="Close shop">✕</button>
+  </div>
+  <div class="shelf" id="shelf"></div>
+</dialog>
+
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const RULES = { base: 1, maxMult: 5, multStep: 0.2, penalty: 1, interval: 5000, comboWindow: 1000, cooldown: 220 };
+
+const STYLES = {
+  basic:  { name: "Natural",     price: 0,    blurb: "Just a regular toe",   color: "#FBE3D3" },
+  pink:   { name: "Baby Pink",   price: 50,   blurb: "Sweet pink polish",    color: "#FF8FC0" },
+  red:    { name: "Classic Red", price: 75,   blurb: "Timeless red polish",  color: "#D7263D" },
+  blue:   { name: "Ocean Blue",  price: 100,  blurb: "Deep sea vibes",       color: "#2459D6" },
+  golden: { name: "24K Gold",    price: 1500, blurb: "Pure gold luxury",     color: "#DAA520" },
+};
+
+const WORDS = ["BONK!", "WHAM!", "THWACK!", "KRAK!", "POW!", "CLANG!"];
+const OUCH = ["OW!", "My toe!", "WHY?!", "I was napping!", "Not again!", "That's the good toe!", "Ask your mother!", "Who raised you?!", "AAAGH!", "I felt that one!"];
+const STORE = "xytoe.v1";
+
+const $ = id => document.getElementById(id);
+const app = $("app"), stage = $("stage"), hammer = $("hammer"), bigToe = $("bigToe"), fx = $("fx");
+
+let save = { score: 0, owned: ["basic"], style: "basic", muted: false };
+try { Object.assign(save, JSON.parse(localStorage.getItem(STORE)) || {}); } catch {}
+const persist = () => { try { localStorage.setItem(STORE, JSON.stringify(save)); } catch {} };
+
+let mult = 1, combo = 0, lastHit = 0, busy = false, deadline = performance.now() + RULES.interval, idleTimer, bubbleTimer;
+
+/* ---------- sound (synthesised, no files) ---------- */
+let ctx;
+function bonk(intensity) {
+  if (save.muted) return;
+  ctx ||= new (window.AudioContext || window.webkitAudioContext)();
+  const t = ctx.currentTime;
+  const o = ctx.createOscillator(), g = ctx.createGain();
+  o.type = "triangle";
+  o.frequency.setValueAtTime(260 + intensity * 60, t);
+  o.frequency.exponentialRampToValueAtTime(55, t + 0.18);
+  g.gain.setValueAtTime(0.7, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+  o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.26);
+  const len = ctx.sampleRate * 0.05, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+  for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+  const n = ctx.createBufferSource(), ng = ctx.createGain();
+  n.buffer = buf; ng.gain.value = 0.5; n.connect(ng).connect(ctx.destination); n.start(t);
+}
+
+/* ---------- rendering ---------- */
+function render() {
+  $("score").textContent = Math.floor(save.score).toLocaleString();
+  $("shopScore").textContent = Math.floor(save.score).toLocaleString();
+  $("mult").textContent = "×" + mult.toFixed(1);
+  const rampage = mult > 2;
+  $("multBox").classList.toggle("rampage", rampage);
+  $("multLabel").textContent = rampage ? "Rampage!" : "multiplier";
+  app.classList.toggle("rampage-on", rampage);
+  document.documentElement.style.setProperty("--hurt", ((mult - 1) / (RULES.maxMult - 1)).toFixed(3));
+  $("combo").textContent = combo > 1 ? `${combo}-hit combo` : "No combo yet";
+  const polish = STYLES[save.style].color;
+  document.documentElement.style.setProperty("--polish", polish);
+  $("foot").className = "foot style-" + save.style;
+  $("mute").textContent = save.muted ? "🔇" : "🔊";
+  $("mute").setAttribute("aria-pressed", save.muted);
+  $("mute").setAttribute("aria-label", save.muted ? "Unmute sound" : "Mute sound");
+}
+
+function tick(now) {
+  let left = deadline - now;
+  if (left <= 0) {
+    deadline = now + RULES.interval;
+    left = RULES.interval;
+    if (save.score > 0) {
+      save.score = Math.max(0, save.score - RULES.penalty);
+      spawnFloat("−" + RULES.penalty, 50, 18, true);
+      persist();
+    }
+    mult = 1; combo = 0;
+    say("Zzz… snore…");
+    render();
+  }
+  $("fuseFill").style.transform = `scaleX(${left / RULES.interval})`;
+  $("fuseTime").textContent = (left / 1000).toFixed(1) + "s";
+  $("fuse").classList.toggle("low", left < 1000);
+  requestAnimationFrame(tick);
+}
+
+/* ---------- effects ---------- */
+function spawn(cls, x, y, html) {
+  const el = document.createElement("div");
+  el.className = cls; el.style.left = x + "cqw"; el.style.top = y + "cqw";
+  if (html) el.innerHTML = html;
+  fx.append(el);
+  el.addEventListener("animationend", () => el.remove(), { once: true });
+  return el;
+}
+const spawnFloat = (text, x, y, minus) => spawn("float" + (minus ? " minus" : ""), x, y, text);
+
+function say(text) {
+  const b = $("bubble");
+  b.textContent = text; b.classList.add("show");
+  clearTimeout(bubbleTimer);
+  bubbleTimer = setTimeout(() => b.classList.remove("show"), 1100);
+}
+
+function restart(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); }
+
+/* ---------- smash ---------- */
+function smash() {
+  if (busy) return;
+  busy = true;
+  const now = performance.now();
+  combo = now - lastHit < RULES.comboWindow ? combo + 1 : 1;
+  lastHit = now;
+  deadline = now + RULES.interval;
+
+  stage.classList.add("played");
+  stage.classList.remove("idle");
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => stage.classList.add("idle"), 2500);
+
+  restart(hammer, "swing");
+  setTimeout(() => impact(), 150);
+  setTimeout(() => (busy = false), RULES.cooldown);
+}
+
+function impact() {
+  const bonus = Math.min((combo - 1) * 0.1, 0.5);
+  const earned = Math.max(1, Math.floor(RULES.base * mult * (1 + bonus)));
+  save.score += earned;
+  mult = Math.min(+(mult + RULES.multStep).toFixed(1), RULES.maxMult);
+  persist();
+
+  bonk(mult);
+  restart(bigToe, "ouch");
+  restart(stage, "shake");
+  const burst = spawn("burst", 27 + (Math.random() * 6 - 3), 55 + (Math.random() * 4 - 2), `<i>${WORDS[Math.random() * WORDS.length | 0]}</i>`);
+  burst.style.rotate = (Math.random() * 30 - 15) + "deg";
+  spawnFloat("+" + earned, 28, 40);
+  for (let i = 0; i < 5; i++) {
+    const d = spawn("drop", 27, 58);
+    const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
+    d.style.setProperty("--dx", Math.cos(a) * (12 + Math.random() * 10) + "cqw");
+    d.style.setProperty("--dy", Math.sin(a) * (10 + Math.random() * 10) + "cqw");
+    d.style.setProperty("--r", (Math.random() * 360) + "deg");
+  }
+  if (navigator.vibrate) navigator.vibrate(18);
+  say(OUCH[Math.random() * OUCH.length | 0]);
+  render();
+}
+
+stage.addEventListener("pointerdown", e => { if (e.button === 0) { e.preventDefault(); smash(); } });
+stage.addEventListener("click", e => { if (e.detail === 0) smash(); }); // keyboard activation
+stage.addEventListener("keydown", e => { if (e.repeat && (e.key === " " || e.key === "Enter")) e.preventDefault(); });
+
+/* ---------- shop ---------- */
+const shop = $("shop");
+function renderShop() {
+  $("shelf").innerHTML = Object.entries(STYLES).map(([id, s]) => {
+    const owned = save.owned.includes(id), worn = save.style === id, afford = save.score >= s.price;
+    let btn;
+    if (worn) btn = `<button class="buy worn" disabled aria-disabled="true">Wearing</button>`;
+    else if (owned) btn = `<button class="buy wear" data-act="wear">Wear</button>`;
+    else btn = `<button class="buy" data-act="buy" ${afford ? "" : "disabled"}>${s.price.toLocaleString()} pts</button>`;
+    return `<div class="item${owned ? "" : " locked"}" data-id="${id}">
+      <div class="bottle" style="--polish:${s.color}"><i class="cap"></i><i class="glass"></i></div>
+      <h3>${s.name}</h3><p>${s.blurb}</p>${btn}</div>`;
+  }).join("");
+}
+$("shelf").addEventListener("click", e => {
+  const btn = e.target.closest("button[data-act]");
+  if (!btn) return;
+  const id = btn.closest(".item").dataset.id, s = STYLES[id];
+  if (btn.dataset.act === "buy") {
+    if (save.score < s.price || save.owned.includes(id)) return;
+    save.score -= s.price;
+    save.owned.push(id);
+    toast(`Bought ${s.name}. Looking sharp.`);
+  } else toast(`Now wearing ${s.name}`);
+  save.style = id;
+  persist(); render(); renderShop();
+});
+$("openShop").addEventListener("click", () => { renderShop(); shop.showModal(); });
+$("closeShop").addEventListener("click", () => shop.close());
+shop.addEventListener("click", e => { if (e.target === shop) shop.close(); });
+
+let toastTimer;
+function toast(msg) {
+  const t = $("toast");
+  (shop.open ? shop : document.body).append(t); // stay above the modal's top layer
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ---------- misc controls ---------- */
+$("mute").addEventListener("click", () => { save.muted = !save.muted; persist(); render(); });
+
+let armTimer;
+$("reset").addEventListener("click", e => {
+  const b = e.currentTarget;
+  if (!b.classList.contains("arm")) {
+    b.classList.add("arm"); b.textContent = "Tap again to reset points";
+    armTimer = setTimeout(() => { b.classList.remove("arm"); b.textContent = "Reset progress"; }, 3000);
+    return;
+  }
+  clearTimeout(armTimer);
+  b.classList.remove("arm"); b.textContent = "Reset progress";
+  save.score = 0; mult = 1; combo = 0; deadline = performance.now() + RULES.interval;
+  persist(); render(); toast("Points reset. Your polish collection stays.");
+});
+
+render();
+requestAnimationFrame(tick);
+</script>
+</body>
 </html>
